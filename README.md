@@ -1,5 +1,5 @@
 # files_backup
-Python script does backup of files and folders.
+Python script backups files and folders.
 
 File config.yaml should be present in the same folder as script.
 
