@@ -14,4 +14,5 @@ After every run it creates log file in the same folder.
 - Python 3.7
 
 ##How to start
+
 `pip install -r requirements.txt`
