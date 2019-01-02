@@ -64,7 +64,13 @@ class Backup:
             logger.info('Reading config...')
             self.__cfg = yaml.load(open(config_path, 'rt'))
             self.__encrypt = self.__cfg['encrypt']
-            self.__psw = open(self.__cfg['psw_file']).readline() if self.__cfg['encrypt'] else None
+            if self.__encrypt:
+                try:
+                    self.__psw = open(self.__cfg['psw_file']).readline()
+                except Exception as e:
+                    logger.error(e)
+                    sys.exit(1)
+
             if self.__encrypt:
                 if not self.__psw:
                     logger.error('Error: Password is not properly set up')
@@ -124,7 +130,7 @@ class Backup:
 
     @divider
     def clean_old(self):
-        r = re.compile('\d{4}\\.\d\d\\.\d\d-\d\d\\.\d\d\\.\d\d')
+        r = re.compile('\\d{4}\\.\\d\\d\\.\\d\\d-\\d\\d\\.\\d\\d\\.\\d\\d')
         fld_lst = [fld[0] for fld in os.walk(self.__dst) if r.match(os.path.basename(fld[0]))]
         fld_lst.sort()
         while len(fld_lst) > self.__keep_version:
@@ -138,29 +144,32 @@ class Backup:
 
     @divider
     def encrypt(self):
-        try:
-            appPath = "C:\\Program Files\\7-Zip"
-            zApp = "7z.exe"
-            progDir = os.path.join(appPath, zApp)
+        if not self.__encrypt:
+            logger.info("Encryption is off")
+        else:
+            try:
+                appPath = "C:\\Program Files\\7-Zip"
+                zApp = "7z.exe"
+                progDir = os.path.join(appPath, zApp)
 
-            rc = subprocess.Popen([progDir, 'a', str(self.__dt_fld.name) + '.7z', '-sdel', '-mhe=on', 'x=0','-p' + self.__psw, '-y', "*.*"],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  cwd=str(self.__dt_fld.resolve()))
-            streamdata = rc.communicate()[0]
+                rc = subprocess.Popen([progDir, 'a', str(self.__dt_fld.name) + '.7z', '-sdel', '-mhe=on', 'x=0', '-p' + self.__psw, '-y', "*.*"],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      cwd=str(self.__dt_fld.resolve()))
+                streamdata = rc.communicate()[0]
 
-            if rc.returncode == 0:
-                logger.info('Encription done successfully')
-            else:
-                logger.info(rc.stderr)
-                logger.info('Encription was unsuccessful')
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+                if rc.returncode == 0:
+                    logger.info('Encription done successfully')
+                else:
+                    logger.info(rc.stderr)
+                    logger.info('Encription was unsuccessful')
+            except Exception as e:
+                logger.error(e)
+                sys.exit(1)
 
 
 def main():
-    logger.info('='*100)
+    logger.info('=' * 100)
     backup = Backup('config.yaml')
     backup.do_folders_backup()
     backup.do_files_backup()
