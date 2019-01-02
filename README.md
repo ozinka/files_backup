@@ -8,3 +8,10 @@ If you need to encrypt the content, install 7zip into the system, create passwor
 You may use existing config file config.yaml.example.
 
 After every run it creates log file in the same folder.
+
+## Framework:
+
+- Python 3.7
+
+##How to start
+`pip install -r requirements.txt`
