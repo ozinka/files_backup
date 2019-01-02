@@ -1,0 +1,18 @@
+backup_destination: C:\BackUp
+
+encrypt: true
+path_to_7z: C:\Program Files\7-Zip\
+psw_file: 'psw.txt'
+
+keep_versions: 7
+
+
+dir_paths:
+  - C:\GIT
+  - C:\Users\username\Documents
+
+
+file_paths:
+  - C:\Users\username\AppData\Roaming\NuGet\NuGet.Config
+  - C:\Users\username\.bash_profile
+

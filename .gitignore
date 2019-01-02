@@ -1,0 +1,9 @@
+psw.txt
+test.py
+test.yaml
+test2.py
+utils.py
+files_backup.py.log
+.idea/
+venv/
+config.yaml
