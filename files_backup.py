@@ -121,11 +121,11 @@ class Backup:
     @divider
     def move_backup(self):
         try:
-            logger.info('Moving archive...')
+            logger.info('Moving files...')
             shutil.move(str(self.__dt_fld), self.__dst)
             logger.info('Moved successfully')
         except Exception as e:
-            logger.error('Copying files...')
+            logger.error('Moving files...')
             logger.error(e)
 
     @divider
@@ -139,7 +139,7 @@ class Backup:
                 shutil.rmtree(fld_to_delete)
                 logger.info(f'Deleted old version: {fld_to_delete} : (ok)')
             except Exception as e:
-                logger.error(f'Error during deleting version: {fld_to_delete} : (Error)')
+                logger.error(f'Error on deleting version: {fld_to_delete} : (Error)')
                 logger.error(e)
 
     @divider
@@ -165,7 +165,6 @@ class Backup:
                     logger.info('Encription was unsuccessful')
             except Exception as e:
                 logger.error(e)
-                sys.exit(1)
 
 
 def main():

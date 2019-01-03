@@ -1,8 +1,8 @@
 backup_destination: C:\BackUp
 
-encrypt: true
+encrypt: false
 path_to_7z: C:\Program Files\7-Zip\
-psw_file: 'psw.txt'
+psw_file: psw.txt
 
 keep_versions: 7
 
