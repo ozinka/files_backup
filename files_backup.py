@@ -66,7 +66,7 @@ class Backup:
             self.__encrypt = self.__cfg['encrypt']
             if self.__encrypt:
                 try:
-                    self.__psw = open(self.__cfg['psw_file']).readline()
+                    self.__psw = open(self.__cfg['psw_file']).readline().strip()
                 except Exception as e:
                     logger.error(e)
                     sys.exit(1)
