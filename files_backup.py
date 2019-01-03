@@ -130,6 +130,9 @@ class Backup:
 
     @divider
     def clean_old(self):
+        if self.__keep_version <= 0:
+            logger.info(f'keep_version is: {self.__keep_version}. Cleaning is ignored.')
+            return
         r = re.compile('\\d{4}\\.\\d\\d\\.\\d\\d-\\d\\d\\.\\d\\d\\.\\d\\d')
         fld_lst = [fld[0] for fld in os.walk(self.__dst) if r.match(os.path.basename(fld[0]))]
         fld_lst.sort()
