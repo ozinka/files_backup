@@ -85,7 +85,7 @@ class Backup:
     @divider
     def do_folders_backup(self):  # Folders backup
         if len(self.__cfg['dir_paths']) > 0:
-            logger.info(f"Files to compress: {len(self.__cfg['dir_paths'])}")
+            logger.info(f"Folders to compress: {len(self.__cfg['dir_paths'])}")
             for folder in self.__cfg['dir_paths']:
                 if not os.path.isdir(folder):
                     logger.error(f'{folder} is not dir, omitted')
