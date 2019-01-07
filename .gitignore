@@ -5,5 +5,5 @@ test2.py
 utils.py
 files_backup.py.log
 .idea/
-venv/
+.venv/
 config.yaml
