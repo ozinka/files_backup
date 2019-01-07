@@ -23,31 +23,35 @@ logger = logging.getLogger()
 
 
 def create_folder():
+    current_directory = os.getcwd()
     cur_date = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S")
-    Path(cur_date).mkdir(exist_ok=True)
-    logger.info(f'Folder to backup: {cur_date}')
-    return Path(cur_date)
+    final_directory = os.path.join(current_directory, cur_date)
+    if not os.path.exists(final_directory):
+        os.makedirs(final_directory)
+    return final_directory
 
 
 def pathToName(pth: str):
     st = pth.replace(':\\', '_').replace('\\\\', '_').replace('\\', '_')
-    if st[-1] == '_': return st[:-1]
-    return st
+    if st[-1] == '_': return st[:-1] + ".zip"
+    return st + ".zip"
 
-def checkFileForIgnore(f, folder, ignoreLst): # Returns True if is not in ignore list and should be processed
-    if not ignoreLst: return True # if it's empty
+
+def checkFileForIgnore(f, folder, ignoreLst):  # Returns True if is not in ignore list and should be processed
     for i in ignoreLst:
-        if os.path.relpath(f, folder).__str__().lower().find(i.lower()) > -1:
+        if os.path.normpath(f).lower().find(os.path.normpath(i).lower()) == 0:
             return False
     return True
 
+
 def compressFolder(folderPath, dest):
-    ignoreLst = []
+    ignoreLst = [dest]
     if type(folderPath) == str:
         folder = folderPath
     else:
         folder = list(folderPath.items())[0][0]
-        ignoreLst = list(folderPath.items())[0][1]
+        for i in list(folderPath.items())[0][1]:
+            ignoreLst.append(os.path.join(folder, i))
 
     if not os.path.isdir(folder):
         logger.error(f'{folder} is not a folder or doesn\'t exist, omitted')
@@ -60,8 +64,9 @@ def compressFolder(folderPath, dest):
     for r, d, f in os.walk(folder):
         for file in f:
             files.append(os.path.join(r, file))
+
+    ZipFile = zipfile.ZipFile(os.path.join(dest, pathToName(folder)), "w")
     try:
-        ZipFile = zipfile.ZipFile(dest.joinpath(pathToName(folder + ".zip")), "w")
         for f in files:
             if checkFileForIgnore(f, folder, ignoreLst):
                 ZipFile.write(filename=f,
@@ -75,6 +80,8 @@ def compressFolder(folderPath, dest):
     except Exception as e:
         logger.error(f'{folder:79} (Er) time: {(time.time() - t):.3f} s')
         logger.error(e)
+    finally:
+        ZipFile.close()
 
 
 def compressFile(file, dest):
@@ -84,15 +91,15 @@ def compressFile(file, dest):
 
     t = time.time()
     print(f'Compressing: {file}')
-    file_zip = zipfile.ZipFile(str(dest.joinpath(pathToName(file))) + '.zip', 'w')
+    ZipFile = zipfile.ZipFile(os.path.join(dest, pathToName(file)), 'w')
     try:
-        file_zip.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+        ZipFile.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
         logger.info(f'{file:79} (ok) time: {(time.time() - t):.3f} s')
     except Exception as e:
         logger.error(f'{file:79} (Er) time: {(time.time() - t):.3f} s')
         logger.error(e)
     finally:
-        file_zip.close()
+        ZipFile.close()
 
 
 def divider(f):
@@ -138,21 +145,17 @@ class Backup:
             self.__dst = self.__cfg['backup_destination']
             self.__keep_version = self.__cfg['keep_versions']
             self.__dt_fld = create_folder()
-
-            # TODO: check if folder doesn't copy itself.
         except Exception as e:
             logger.error(e)
             sys.exit(1)
 
     # noinspection SpellCheckingInspection
     @divider
-    def do_folders_backup(self):  # Folders backup
-        # TODO: implement .gitignore for folders
-        # TODO: show what is compressing in logs
-
+    def do_folders_backup(self):
         if len(self.__cfg['dir_paths']) > 0:
             logger.info(f"Folders to compress: {len(self.__cfg['dir_paths'])}")
             for folder in self.__cfg['dir_paths']:
+                # print(folder, self.__dt_fld)
                 compressFolder(folder, self.__dt_fld)
 
     @divider
