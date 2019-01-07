@@ -9,6 +9,7 @@ import time
 import zipfile
 from pathlib import PurePath, Path
 
+
 import yaml
 
 logging.basicConfig(
@@ -113,6 +114,21 @@ def divider(f):
     return tmp
 
 
+def encrypt(psw, pswEncrypt):
+    import hashlib
+    if str(pswEncrypt).lower() == 'md5':
+        m = hashlib.md5()
+        m.update(psw.encode('utf-8'))
+        logging.info(f'Password encrypted with {pswEncrypt}')
+        return m.hexdigest()
+    if str(pswEncrypt).lower() == 'sha256':
+        m = hashlib.sha256()
+        m.update(psw.encode('utf-8'))
+        logging.info(f'Password encrypted with {pswEncrypt}')
+        return m.hexdigest()
+    return psw
+
+
 class Backup:
     """
     Do backup of files and folders with optional encryption.
@@ -134,6 +150,13 @@ class Backup:
             if self.__encrypt:
                 try:
                     self.__psw = open(self.__cfg['psw_file']).readline().strip()
+                    self.__7zPath = self.__cfg['path_to_7z']
+                    try:
+                        self.__pswEncrypt = self.__cfg['psw.encrypt']
+                        self.__psw = encrypt(self.__psw, self.__pswEncrypt)
+                    except Exception as e:
+                        self.__pswEncrypt = None
+                        logging.error("psw.encypt wasn't set, ommited")
                 except Exception as e:
                     logger.error(e)
                     sys.exit(1)
@@ -181,15 +204,16 @@ class Backup:
             logger.info("Encryption is off")
         else:
             try:
-                appPath = "C:\\Program Files\\7-Zip"
+                appPath = self.__7zPath  # "C:\\Program Files\\7-Zip"
                 zApp = "7z.exe"
                 progDir = os.path.join(appPath, zApp)
 
                 rc = subprocess.Popen(
-                    [progDir, 'a', str(self.__dt_fld.name) + '.7z', '-sdel', '-mhe=on', 'x=0', '-p' + self.__psw, '-y', "*.*"],
+                    [progDir, 'a', os.path.join(self.__dt_fld, os.path.basename(self.__dt_fld)) + '.7z', '-sdel', '-mhe=on', 'x=0',
+                     '-p' + self.__psw, '-y', "*.*"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    cwd=str(self.__dt_fld.resolve()))
+                    cwd=self.__dt_fld)
                 streamdata = rc.communicate()[0]
 
                 if rc.returncode == 0:
