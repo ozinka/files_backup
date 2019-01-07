@@ -68,6 +68,6 @@ Possible usage - Windows scheduler (cron in Linux).
 
 This script can be used to get hash from the password to decript backup.
 
-### usage
+### Usage
 
 <pasth to python3.7>python password_encrypt.py
