@@ -3,14 +3,16 @@ backup_destination: C:\BackUp
 encrypt: false
 path_to_7z: C:\Program Files\7-Zip\
 psw_file: psw.txt
-encrypt.psw: None #can be md5, sha256
+psw.encrypt: md5 #can be md5, sha256 or None
 
 keep_versions: 7
-use.gitignore: false #applicable for folders
 
 
 dir_paths:
-  - C:\GIT
+  - C:\GIT\test:
+      - .vevn
+      - .git
+      - license
   - C:\Users\username\Documents
 
 
