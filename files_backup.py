@@ -34,25 +34,47 @@ def pathToName(pth: str):
     if st[-1] == '_': return st[:-1]
     return st
 
+def checkFileForIgnore(f, folder, ignoreLst): # Returns True if is not in ignore list and should be processed
+    if not ignoreLst: return True # if it's empty
+    for i in ignoreLst:
+        if os.path.relpath(f, folder).__str__().lower().find(i.lower()) > -1:
+            return False
+    return True
 
-def compressFolder(folder, dest):
+def compressFolder(folderPath, dest):
+    ignoreLst = []
+    if type(folderPath) == str:
+        folder = folderPath
+    else:
+        folder = list(folderPath.items())[0][0]
+        ignoreLst = list(folderPath.items())[0][1]
+
     if not os.path.isdir(folder):
         logger.error(f'{folder} is not a folder or doesn\'t exist, omitted')
-        return
+        return -1
 
     t = time.time()
-    logger.info(f'Compressing: {folder}')
+    print(f'Compressing: {folder}')
 
     files = []
     for r, d, f in os.walk(folder):
         for file in f:
             files.append(os.path.join(r, file))
+    try:
+        ZipFile = zipfile.ZipFile(dest.joinpath(pathToName(folder + ".zip")), "w")
+        for f in files:
+            if checkFileForIgnore(f, folder, ignoreLst):
+                ZipFile.write(filename=f,
+                              arcname=os.path.relpath(f, folder),
+                              compress_type=zipfile.ZIP_DEFLATED)
+            else:
+                logging.info(f'{os.path.relpath(f, folder)} is ignored')
 
-    ZipFile = zipfile.ZipFile(dest.joinpath(pathToName(folder + ".zip")), "w")
-    for f in files:
-        ZipFile.write(filename=f, arcname=os.path.relpath(f, folder), compress_type=zipfile.ZIP_DEFLATED)
-
-    logger.info(f'(ok) time: {(time.time() - t):.3f} s')
+        logger.info(f'{folder:79} (ok) time: {(time.time() - t):.3f} s')
+        return 0
+    except Exception as e:
+        logger.error(f'{folder:79} (Er) time: {(time.time() - t):.3f} s')
+        logger.error(e)
 
 
 def compressFile(file, dest):
@@ -61,13 +83,13 @@ def compressFile(file, dest):
         return
 
     t = time.time()
-    logger.info(f'Compressing: {file}')
+    print(f'Compressing: {file}')
     file_zip = zipfile.ZipFile(str(dest.joinpath(pathToName(file))) + '.zip', 'w')
     try:
         file_zip.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
-        logger.info(f'(ok) time: {(time.time() - t):.3f} s')
+        logger.info(f'{file:79} (ok) time: {(time.time() - t):.3f} s')
     except Exception as e:
-        logger.error(f'(Er) time: {(time.time() - t):.3f} s')
+        logger.error(f'{file:79} (Er) time: {(time.time() - t):.3f} s')
         logger.error(e)
     finally:
         file_zip.close()
@@ -151,23 +173,6 @@ class Backup:
             logger.error(e)
 
     @divider
-    def clean_old(self):
-        if self.__keep_version <= 0:
-            logger.info(f'keep_version is: {self.__keep_version}. Cleaning is ignored.')
-            return
-        r = re.compile('\\d{4}\\.\\d\\d\\.\\d\\d-\\d\\d\\.\\d\\d\\.\\d\\d')
-        fld_lst = [fld[0] for fld in os.walk(self.__dst) if r.match(os.path.basename(fld[0]))]
-        fld_lst.sort()
-        while len(fld_lst) > self.__keep_version:
-            fld_to_delete = fld_lst.pop(0)
-            try:
-                shutil.rmtree(fld_to_delete)
-                logger.info(f'Deleted old version: {fld_to_delete} : (ok)')
-            except Exception as e:
-                logger.error(f'Error on deleting version: {fld_to_delete} : (Error)')
-                logger.error(e)
-
-    @divider
     def encrypt(self):
         if not self.__encrypt:
             logger.info("Encryption is off")
@@ -190,6 +195,23 @@ class Backup:
                     logger.info(rc.stderr)
                     logger.info('Encryption was unsuccessful')
             except Exception as e:
+                logger.error(e)
+
+    @divider
+    def clean_old(self):
+        if self.__keep_version <= 0:
+            logger.info(f'keep_version is: {self.__keep_version}. Cleaning is ignored.')
+            return
+        r = re.compile('\\d{4}\\.\\d\\d\\.\\d\\d-\\d\\d\\.\\d\\d\\.\\d\\d')
+        fld_lst = [fld[0] for fld in os.walk(self.__dst) if r.match(os.path.basename(fld[0]))]
+        fld_lst.sort()
+        while len(fld_lst) > self.__keep_version:
+            fld_to_delete = fld_lst.pop(0)
+            try:
+                shutil.rmtree(fld_to_delete)
+                logger.info(f'Deleted old version: {fld_to_delete} : (ok)')
+            except Exception as e:
+                logger.error(f'Error on deleting version: {fld_to_delete} : (Error)')
                 logger.error(e)
 
 
