@@ -35,6 +35,38 @@ def path_to_name(pth: str):
     return st
 
 
+def compressFolder(folder, dest):
+    if not os.path.isdir(folder):
+        logger.error(f'{folder} is not dir, omitted')
+        return
+
+    t = time.time()
+    logger.info(f'Compressing: {folder}')
+    try:
+        shutil.make_archive(dest.joinpath(path_to_name(folder)), 'zip', folder)
+    except Exception as e:
+        print(e)
+    logger.info(f'(ok) time: {(time.time() - t):.3f} s')
+
+
+def compressFile(file, dest):
+    if not os.path.isfile(file):
+        logger.error(f'{file} is not dir, omitted')
+        return
+
+    t = time.time()
+    logger.info(f'Compressing: {file}')
+    file_zip = zipfile.ZipFile(str(dest.joinpath(path_to_name(file))) + '.zip', 'w')
+    try:
+        file_zip.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+        logger.info(f'(ok) time: {(time.time() - t):.3f} s')
+    except Exception as e:
+        logger.error(f'(Er) time: {(time.time() - t):.3f} s')
+        logger.error(e)
+    finally:
+        file_zip.close()
+
+
 def divider(f):
     def tmp(*args, **kwargs):
         logger.info("-" * 80)
@@ -78,45 +110,29 @@ class Backup:
             self.__dst = self.__cfg['backup_destination']
             self.__dt_fld = create_folder()
             self.__keep_version = self.__cfg['keep_versions']
+
+            # TODO: check if folder doesn't copy itself.
         except Exception as e:
             logger.error(e)
             sys.exit(1)
 
+    # noinspection SpellCheckingInspection
     @divider
     def do_folders_backup(self):  # Folders backup
+        # TODO: implement .gitignore for folders
+        # TODO: show what is compressing in logs
+
         if len(self.__cfg['dir_paths']) > 0:
             logger.info(f"Folders to compress: {len(self.__cfg['dir_paths'])}")
             for folder in self.__cfg['dir_paths']:
-                if not os.path.isdir(folder):
-                    logger.error(f'{folder} is not dir, omitted')
-                    continue
-
-                t = time.time()
-                try:
-                    shutil.make_archive(self.__dt_fld.joinpath(path_to_name(folder)), 'zip', folder)
-                except Exception as e:
-                    print(e)
-                logger.info(f'{folder:79} (ok) time: {(time.time() - t):.3f} s')
+                compressFolder(folder, self.__dt_fld)
 
     @divider
     def do_files_backup(self):  # Files backup
         if len(self.__cfg['file_paths']) > 0:
             logger.info(f"Files to compress: {len(self.__cfg['file_paths'])}")
             for file in self.__cfg['file_paths']:
-                if not os.path.isfile(file):
-                    logger.error(f'{file} is not dir, omitted')
-                    continue
-
-                t = time.time()
-                file_zip = zipfile.ZipFile(str(self.__dt_fld.joinpath(path_to_name(file))) + '.zip', 'w')
-                try:
-                    file_zip.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
-                    logger.info(f'{file:79} (ok) time: {(time.time() - t):.3f} s')
-                except Exception as e:
-                    logger.error(f'{file:79} (Er) time: {(time.time() - t):.3f} s')
-                    logger.error(e)
-                finally:
-                    file_zip.close()
+                compressFile(file, self.__dt_fld)
 
     @divider
     def move_backup(self):
@@ -155,17 +171,18 @@ class Backup:
                 zApp = "7z.exe"
                 progDir = os.path.join(appPath, zApp)
 
-                rc = subprocess.Popen([progDir, 'a', str(self.__dt_fld.name) + '.7z', '-sdel', '-mhe=on', 'x=0', '-p' + self.__psw, '-y', "*.*"],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      cwd=str(self.__dt_fld.resolve()))
+                rc = subprocess.Popen(
+                    [progDir, 'a', str(self.__dt_fld.name) + '.7z', '-sdel', '-mhe=on', 'x=0', '-p' + self.__psw, '-y', "*.*"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=str(self.__dt_fld.resolve()))
                 streamdata = rc.communicate()[0]
 
                 if rc.returncode == 0:
-                    logger.info('Encription done successfully')
+                    logger.info('Encryption done successfully')
                 else:
                     logger.info(rc.stderr)
-                    logger.info('Encription was unsuccessful')
+                    logger.info('Encryption was unsuccessful')
             except Exception as e:
                 logger.error(e)
 
