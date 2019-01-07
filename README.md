@@ -1,6 +1,6 @@
 # Python script for backup files and folders
 
-##files_backup.py
+## files_backup.py
 
 File **config.yaml** should be present in the same folder as script.
 
@@ -36,10 +36,11 @@ like
 c:\GIT\test\.venv_01
 c:\GIT\test\.venv\file.txt
 c:\GIT\test\.venv_01\folder1\file2.txt
+c:\GIT\test\license.txt
 ```
 
 
-will be ignored.
+will be ignored. Ignorred files are case insensitive.
 
 
 ## Additional
@@ -66,7 +67,7 @@ Possible usage - Windows scheduler (cron in Linux).
 
 ## password_encrypt.py
 
-This script can be used to get hash from the password to decript backup.
+This script can be used to get hash from the password to decrypt backup.
 
 ### Usage
 
