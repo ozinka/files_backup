@@ -29,7 +29,7 @@ def create_folder():
     return Path(cur_date)
 
 
-def path_to_name(pth: str):
+def pathToName(pth: str):
     st = pth.replace(':\\', '_').replace('\\\\', '_').replace('\\', '_')
     if st[-1] == '_': return st[:-1]
     return st
@@ -37,15 +37,21 @@ def path_to_name(pth: str):
 
 def compressFolder(folder, dest):
     if not os.path.isdir(folder):
-        logger.error(f'{folder} is not dir, omitted')
+        logger.error(f'{folder} is not a folder or doesn\'t exist, omitted')
         return
 
     t = time.time()
     logger.info(f'Compressing: {folder}')
-    try:
-        shutil.make_archive(dest.joinpath(path_to_name(folder)), 'zip', folder)
-    except Exception as e:
-        print(e)
+
+    files = []
+    for r, d, f in os.walk(folder):
+        for file in f:
+            files.append(os.path.join(r, file))
+
+    ZipFile = zipfile.ZipFile(dest.joinpath(pathToName(folder + ".zip")), "w")
+    for f in files:
+        ZipFile.write(filename=f, arcname=os.path.relpath(f, folder), compress_type=zipfile.ZIP_DEFLATED)
+
     logger.info(f'(ok) time: {(time.time() - t):.3f} s')
 
 
@@ -56,7 +62,7 @@ def compressFile(file, dest):
 
     t = time.time()
     logger.info(f'Compressing: {file}')
-    file_zip = zipfile.ZipFile(str(dest.joinpath(path_to_name(file))) + '.zip', 'w')
+    file_zip = zipfile.ZipFile(str(dest.joinpath(pathToName(file))) + '.zip', 'w')
     try:
         file_zip.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
         logger.info(f'(ok) time: {(time.time() - t):.3f} s')
@@ -108,8 +114,8 @@ class Backup:
                     logger.error('Error: Password is not properly set up')
                     raise AttributeError
             self.__dst = self.__cfg['backup_destination']
-            self.__dt_fld = create_folder()
             self.__keep_version = self.__cfg['keep_versions']
+            self.__dt_fld = create_folder()
 
             # TODO: check if folder doesn't copy itself.
         except Exception as e:
