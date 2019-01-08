@@ -7,8 +7,7 @@ import subprocess
 import sys
 import time
 import zipfile
-from pathlib import PurePath, Path
-
+from pathlib import PurePath
 
 import yaml
 
@@ -66,7 +65,7 @@ def compressFolder(folderPath, dest):
         for file in f:
             files.append(os.path.join(r, file))
 
-    ZipFile = zipfile.ZipFile(os.path.join(dest, pathToName(folder)), "w")
+    ZipFile = zipfile.ZipFile(os.path.join(dest, 'd' + pathToName(folder)), "w")
     try:
         for f in files:
             if checkFileForIgnore(f, folder, ignoreLst):
@@ -92,7 +91,7 @@ def compressFile(file, dest):
 
     t = time.time()
     print(f'Compressing: {file}')
-    ZipFile = zipfile.ZipFile(os.path.join(dest, pathToName(file)), 'w')
+    ZipFile = zipfile.ZipFile(os.path.join(dest, 'f'+pathToName(file)), 'w')
     try:
         ZipFile.write(file, arcname=PurePath(file).name, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
         logger.info(f'{file:79} (ok) time: {(time.time() - t):.3f} s')
@@ -156,20 +155,20 @@ class Backup:
                         self.__psw = encrypt(self.__psw, self.__pswEncrypt)
                     except Exception as e:
                         self.__pswEncrypt = None
-                        logging.error("psw.encypt wasn't set, ommited")
+                        logging.critical("psw.encypt wasn't set, omited")
                 except Exception as e:
-                    logger.error(e)
+                    logger.critical(e)
                     sys.exit(1)
 
             if self.__encrypt:
                 if not self.__psw:
-                    logger.error('Error: Password is not properly set up')
+                    logger.critical('Error: Password is not properly set up')
                     raise AttributeError
             self.__dst = self.__cfg['backup_destination']
             self.__keep_version = self.__cfg['keep_versions']
             self.__dt_fld = create_folder()
         except Exception as e:
-            logger.error(e)
+            logger.critical(e)
             sys.exit(1)
 
     # noinspection SpellCheckingInspection
@@ -178,7 +177,6 @@ class Backup:
         if len(self.__cfg['dir_paths']) > 0:
             logger.info(f"Folders to compress: {len(self.__cfg['dir_paths'])}")
             for folder in self.__cfg['dir_paths']:
-                # print(folder, self.__dt_fld)
                 compressFolder(folder, self.__dt_fld)
 
     @divider
